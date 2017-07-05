@@ -1,10 +1,11 @@
 # Hadoop_learning
 
 <p>
-<a href="http://hadoop.apache.org"><img src="picture/hadoop-logo.jpg" align="middle"></a>
+<a href="http://hadoop.apache.org"><img src="picture/hadoop-logo.jpg" align="right"></a>
 <p/>
 
-
+<br><br/>
+<br><br/>
 # 大数据重点技术栈
 
 <p>
