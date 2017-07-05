@@ -1,0 +1,27 @@
+> 近一年来从事金融数据安全架构方面工作，对大数据平台安全重要性有了一些新的思考。最近看了Steve Loughran先生写的本书《Hadoop  and Kerberos: The Madness Beyond the Gate》，写作风格幽默风趣，但是国内对大数据平台的安全考虑的文章的确较少，今年6月1号的网络安全法颁布之后，中小型公司不得不开始重视数据安全。顺便吐槽一下，看了他在youtobe上面的视频演讲，真是人不可貌像、海水不可斗量，当然比好多人知道鄙人真名后，对我呵呵两声好多了。本系列文章主要是分析Hadoop安全现状和源码，个人能力有限，麻烦各位大神及时斧正。
+ 
+
+ - 很多公司都采用了kerberos作为Hadoop的安全基石，但是keberos本身的缺陷我们需要了解，接下来内容会结合Steve的观点，来分析kerberos的不足。
+ - Kerberos 被认为是在安全的分布式系统方面是最好的。设计tickets去限制KDC的负载，当principal需要一个ticket的时候才会与其通信，而不是每次请求都必须验证其合法性。
+ - Hadoop 进程间可以使用代理tokens 保证了使用原始principal得以传递认证。Hadoop 核心服务使用代理tokens
+   作为认证用户，并准许这个用户发布的服务。如果不了解Hadoop的代理token，建议用户详细阅读：“Hadoop Security Design”  Owen O’Malley, Kan Zhang, Sanjay Radia,  Ram Marti, and Christopher Harrell。
+ - tickets和tokens具有时效性，这意味着即使被盗取，被盗用使用的时间只限制在tokens的寿命之内。kerberos客户端可以部署到Window、Linux，OS/X和java runtime，这意味着kerberos使用比较广泛，安全风险也大。kerberos只是三头狗，不是万能的神，已知的缺陷如下：
+>  1、KDC 有单点风险，除非设置HA系统(Aictive Directory          可以做到这一点，目前apache directoryserver 也可以做到这一点)；
+>  
+>  2、访问压力可能使KDC过载；分布式服务使用Kerberos 必须做到这一点，KDC无法承受高负载请求；为什么Hadoop 要使用代理tokens的原因也是如此；
+>  
+> 3、服务之间的通信通道也需要安全认证，kerberos不保证数据加密；如果通信通道不安全，tickets 可能会被拦截或者通信伪造；
+> 
+> 4、机器之前需要保证时间的精确一致性，不然具备时限的tockens不会正常工作；这个在分布式领域是一个典型的问题，Paxos &Raft协议也必须保证时间的一致性；
+> 
+>  5、如果机器间的时间没有被安全管理，理论上可能延长被盗token的使用时间；
+>  
+> 6、被盗用的token可以拿来直接访问服务，在KDC是没有访问日志的。每一个application需要拥有自己的以用户为单位的审计日志，这样才能保证被盗的ticket可被追踪，比如在Hadoop里面HDFS审计日志； 
+> 
+> 7、这是一个仅仅认证服务：验证caller的合法性并准许给caller传递认证信息，他不处理任何授权信息；
+> 
+> 如果需要关注更多kerberos细节问题，可以参考： Kerberos in the Crosshairs: Golden Tickets,Silver Tickets, MITM, and More
+
+### 参考文章：
+1)https://steveloughran.gitbooks.io/kerberos_and_hadoop/content/sections/what_is_kerberos.html
+2)“Hadoop Security Design”  Owen O’Malley, Kan Zhang, Sanjay Radia,  Ram Marti, and Christopher Harrell。
